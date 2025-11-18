@@ -1,0 +1,10 @@
+# Python
+.venv/
+venv/
+env/
+.web
+*.db
+__pycache__/
+assets/external/
+*.py[cod]
+.states
