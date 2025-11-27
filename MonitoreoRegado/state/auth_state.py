@@ -1,28 +1,17 @@
-import re
 from datetime import datetime
-import bcrypt
 import reflex as rx
-from MonitoreoRegado.models import Usuario, Rol
 from sqlmodel import select
-
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-def check_password(password: str, password_hash: str) -> bool:
-    try:
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
-    except Exception:
-        return False
-
-def validar_email(email: str) -> bool:
-    return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email))
-
-def validar_fuerte_pass(pw: str) -> bool:
-    return len(pw) >= 8 and re.search(r"[A-Za-z]", pw) and re.search(r"\d", pw)
+from MonitoreoRegado.models import Usuario, Rol
+from MonitoreoRegado.api.auth import (
+    hash_password,
+    check_password,
+    validar_email,
+    validar_fuerte_pass,
+)
 
 ROLES = ["admin", "usuario"]
 
-class State(rx.State):
+class AuthState(rx.State):
     
     def datos_iniciales(self):
         with rx.session() as session:
@@ -105,12 +94,12 @@ class State(rx.State):
             
             todos_los_roles = session.exec(select(Rol)).all()
             if not todos_los_roles:
-                print("🔄 Creando roles automáticamente...")
+                print("Creando roles automáticamente...")
                 for desc_rol in ["admin", "usuario"]:
                     session.add(Rol(descripcion=desc_rol))
                 session.commit()
                 todos_los_roles = session.exec(select(Rol)).all()
-                print(f"🔄 Roles creados: {[r.descripcion for r in todos_los_roles]}")
+                print(f"Roles creados: {[r.descripcion for r in todos_los_roles]}")
         
             
             existe = session.exec(
@@ -184,7 +173,7 @@ class State(rx.State):
         self.logro_login = "¡Login exitoso!"
         self.error_login = ""
         self.password = ""
-        return rx.redirect("/dashboard")
+        return rx.redirect("/monitoreo")
         
     def logout(self):
         self.usuario_id = 0
@@ -196,5 +185,3 @@ class State(rx.State):
         self.logro_login = ""
         return rx.redirect("/")
 
-def required_auth(state: State) -> bool:
-    return state.correcta_autenticacion
