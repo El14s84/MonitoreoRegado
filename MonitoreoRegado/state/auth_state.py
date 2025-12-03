@@ -49,6 +49,10 @@ class AuthState(rx.State):
     usuario_id: int = 0
     correcta_autenticacion: bool = False
     
+    # toma de datos
+    rol_actual: str = ""
+    nombre_actual: str = ""
+    
     def set_name(self, name: str):
         self.name = name
     
@@ -170,18 +174,48 @@ class AuthState(rx.State):
         
         self.usuario_id = user.id
         self.correcta_autenticacion = True
+        self.nombre_actual = user.name
+        self.rol_actual = self.obtener_rol_usuario(user.id)
         self.logro_login = "¡Login exitoso!"
         self.error_login = ""
         self.password = ""
-        return rx.redirect("/monitoreo")
         
+        print(f"Usuario '{self.nombre_actual}' con rol '{self.rol_actual}' ha iniciado sesión.")
+        return rx.redirect("/monitoreo")
+    
     def logout(self):
         self.usuario_id = 0
         self.correcta_autenticacion = False
+        self.nombre_actual = ""
+        self.rol_actual = ""
+        self.name = ""
         self.email = ""
         self.password = ""
         self.confirmacion_password = ""
         self.error_login = ""
         self.logro_login = ""
         return rx.redirect("/")
-
+    
+    def get_rol_actual(self) -> str:
+        return self.rol_actual
+    
+    def es_admin(self) -> bool:
+        return self.rol_actual == "admin"
+    
+    def es_usuario(self) -> bool:
+        return self.rol_actual == "usuario"
+    
+    def tiene_permiso(self, roles_permitidos: list) -> bool:
+        return self.rol_actual in roles_permitidos
+    
+    def obtener_rol_usuario(self, usuario_id: int) -> str:
+        with rx.session() as session:
+            usuario = session.exec(
+                select(Usuario).where(Usuario.id == usuario_id)
+            ).first()
+            if usuario:
+                rol = session.exec(
+                    select(Rol).where(Rol.id == usuario.rol_id)
+                ).first()
+                return rol.descripcion if rol else "usuario"
+            return "usuario"

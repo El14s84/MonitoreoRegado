@@ -17,9 +17,28 @@ def drawer_content() -> rx.Component:
                 
                 rx.heading("Navegación", size="5", padding_x="1rem"),
                 
-                rx.box(
-                    navbar(),
-                    padding="1rem"
+                rx.card(
+                    rx.avatar(src="/images/profile-icon.png", size="5"),
+                    rx.text(
+                        AuthState.nombre_actual, 
+                        margin_top="1rem", 
+                        margin_bottom="0.5rem",
+                        font_weight="bold",
+                    ),
+                    rx.text(
+                        AuthState.rol_actual, 
+                        margin_top="0.5rem", 
+                        margin_bottom="1rem",
+                    ),
+                    rx.spacer(),
+                    padding="1rem",
+                ),
+                
+                rx.vstack(
+                    rx.link("Inicio", href="/monitoreo"),
+                    rx.link("Invernadero", href="/greenhouse"),
+                    spacing="4",
+                    padding="1rem",
                 ),
                 
                 rx.spacer(),
