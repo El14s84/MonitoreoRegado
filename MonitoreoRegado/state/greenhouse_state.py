@@ -7,12 +7,19 @@ class GreenhouseState(rx.State):
     invernaderos: List[Dict] = []
     mostrar_dialogo: bool = False
     mensaje: str = ""
+    mostrar_dialogo_eliminar: bool = False
+    invernadero_por_eliminar: int | None = None
     
     def set_mostrar_dialogo(self, value: bool):
         self.mostrar_dialogo = value
         
     def set_mensaje(self, value: str):
         self.mensaje = value
+    
+    def set_mostrar_dialogo_eliminar(self, value: bool):
+        self.mostrar_dialogo_eliminar = value
+        if not value:
+            self.invernadero_por_eliminar = None
         
     def set_invernaderos(self, value: List[Dict]):
         self.invernaderos = value
@@ -23,11 +30,48 @@ class GreenhouseState(rx.State):
     def cerrar_dialogo(self):
         self.mostrar_dialogo = False
         self.mensaje = ""
+        
+    def abrir_dialogo_eliminar(self, invernadero_id: int):
+        self.invernadero_por_eliminar = invernadero_id
+        self.mostrar_dialogo_eliminar = True
+    
+    def cerrar_dialogo_eliminar(self):
+        self.mostrar_dialogo_eliminar = False
+        self.invernadero_por_eliminar = None
+        
+    def confirmar_eliminacion(self):
+        if self.invernadero_por_eliminar is None:
+            print("No hay invernadero seleccionado para eliminar.")
+            return
+        
+        try:
+            with rx.session() as db:
+                invernadero = db.exec(
+                    select(Invernadero).where(Invernadero.id == self.invernadero_por_eliminar)
+                ).first()
+            
+                if invernadero:
+                    invernadero.eliminado = True
+                    invernadero.is_active = False
+                    db.commit()
+                    print(f"Invernadero {self.invernadero_por_eliminar} eliminado.")
+                    self.mensaje = "Invernadero eliminado."
+                else:
+                    print(f"Invernadero {self.invernadero_por_eliminar} no encontrado.")
+                    self.mensaje = "Invernadero no encontrado."
+        except Exception as e:
+            print(f"Error al eliminar invernadero: {e}")
+            self.mensaje = f"Error al eliminar invernadero: {str(e)}"
+        
+        self.cerrar_dialogo_eliminar()
+        self.cargar_invernaderos()
     
     def cargar_invernaderos(self):
         try:
             with rx.session() as db:
-                invernaderos_db = db.exec(select(Invernadero)).all()
+                invernaderos_db = db.exec(
+                    select(Invernadero).where(Invernadero.eliminado == False)
+                ).all()
                 print(f"Invernaderos encontrados: {len(invernaderos_db)}")
                 
                 self.invernaderos = []

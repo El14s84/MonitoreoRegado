@@ -92,9 +92,23 @@ def tarjeta_invernadero(invernadero: dict) -> rx.Component:
             align_items="start",
             width="100%"
         ),
+        
+        rx.icon_button(
+            rx.icon("trash-2", size=16),
+            size="1",
+            variant="ghost",
+            color_scheme="red",
+            on_click=lambda: GreenhouseState.abrir_dialogo_eliminar(invernadero["id"]),
+            position="absolute",
+            bottom="8px",
+            right="8px",
+            cursor="pointer",
+        ),
+        
         size="3",
         width="300px",
-        height="auto"
+        height="auto",
+        position="relative",
     )
     
 def tarjeta_principal() -> rx.Component:
@@ -171,6 +185,41 @@ def modal_formulario() -> rx.Component:
         on_open_change=GreenhouseState.set_mostrar_dialogo,
     )
 
+def dialogo_confirmar() -> rx.Component:
+    return rx.alert_dialog.root(
+        rx.alert_dialog.content(
+            rx.alert_dialog.title(
+                "¿Eliminar Invernadero?",
+                size="5",
+            ),
+            rx.alert_dialog.description(
+                "Esta acción es irreversible",
+                size="3",
+                margin_bottom="1em",
+            ),
+            rx.flex(
+                rx.alert_dialog.cancel(
+                    rx.button(
+                        "Cancelar",
+                        variant="soft",
+                        color_scheme="gray",
+                    ),
+                ),
+                rx.alert_dialog.action(
+                    rx.button(
+                        "Eliminar",
+                        color_scheme="red",
+                        on_click=GreenhouseState.confirmar_eliminacion,
+                    ),
+                ),
+                spacing="3",
+                justify="end",
+            ),
+        ),
+        open=GreenhouseState.mostrar_dialogo_eliminar,
+        on_open_change=GreenhouseState.set_mostrar_dialogo_eliminar,
+    )
+
 def pagina_invernadero() -> rx.Component:
     autenticado_view = rx.container(
         rx.hstack(
@@ -183,6 +232,7 @@ def pagina_invernadero() -> rx.Component:
         rx.heading("INVERNADEROS", size="9", text_align="center", margin_top="40px", margin_bottom="20px"),
         
         modal_formulario(),
+        dialogo_confirmar(),
         
         rx.grid(
             tarjeta_principal(),

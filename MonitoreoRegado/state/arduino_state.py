@@ -110,6 +110,45 @@ class ArduinoState(rx.State):
         self.historial_tabla.append(nueva_fila)
         if len(self.historial_tabla) > 5:
             self.historial_tabla.pop(0)
+            
+    def enviar_comando(self, comando: str):
+        try:
+            if self._ser and self._ser.is_open:
+                self._ser.write(f"{comando}\n".encode())
+                print(f"Comando enviado: {comando}")
+                return True
+        except Exception as e:
+            print(f"Error enviando comando: {e}")
+        return False
+
+    def activar_riego_programado(self, invernadero_id: int):
+        if self.enviar_comando("RIEGO_ON"):
+            try:
+                with rx.session() as session:
+                    invernadero = session.get(Invernadero, invernadero_id)
+                    if invernadero:
+                        invernadero.Riego_Activo = True
+                        session.add(invernadero)
+                        session.commit()
+                        print(f"Invernadero {invernadero_id} activado.")
+            except Exception as e:
+                print(f"Error al activar riego programado: {e}")
+    
+    def desactivar_riego_programado(self, invernadero_id: int):
+        if self.enviar_comando("RIEGO_OFF"):
+            try:
+                with rx.session() as session:
+                    invernadero = session.get(Invernadero, invernadero_id)
+                    if invernadero:
+                        invernadero.Riego_Activo = False
+                        session.add(invernadero)
+                        session.commit()
+                        print(f"Invernadero {invernadero_id} desactivado.")
+            except Exception as e:
+                print(f"Error al desactivar riego programado: {e}")
+    
+    def volver_modo_automatico(self):
+        self.enviar_comando("MODO_AUTOMATICO")
 
     def detener_monitoreo(self):
         self.is_running = False

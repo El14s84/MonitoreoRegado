@@ -37,6 +37,7 @@ def drawer_content() -> rx.Component:
                 rx.vstack(
                     rx.link("Inicio", href="/monitoreo"),
                     rx.link("Invernadero", href="/greenhouse"),
+                    rx.link("Calendario", href="/calendario"),
                     spacing="4",
                     padding="1rem",
                 ),

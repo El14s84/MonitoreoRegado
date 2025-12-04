@@ -54,6 +54,7 @@ class Invernadero(SQLModel, table=True):
     Nivel_Agua: float= Field(default=0.0)
     Riego_Activo: bool = False
     is_active: bool = True
+    eliminado: bool = False
     
     reporte_historico: List["Reporte"] = Relationship(back_populates="invernadero")
     accion: List["HistorialAcciones"] = Relationship(back_populates="invernadero")
@@ -110,6 +111,7 @@ class Calendario(SQLModel, table=True):
     hora_inicial: Optional[time] = None
     hora_final: Optional[time] = None
     is_active: bool = True
+    ultima_confirmacion: Optional[datetime] = None
     
 class Sensor(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -119,3 +121,27 @@ class Sensor(SQLModel, table=True):
     temperatura: Optional[float] = None
     humedad: Optional[float] = None
     nivel_agua: Optional[float] = None
+    
+def inicializar_datos():
+    from sqlmodel import Session, select
+    import reflex as rx
+    
+    with rx.session() as session:
+        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        for dia in dias_semana:
+            existe = session.exec(select(Semana).where(Semana.nombre_dia == dia)).first()
+            if not existe:
+                semana = Semana(nombre_dia=dia)
+                session.add(semana)
+                print(f"Día insertado: {dia}")
+        
+        acciones = ["Riego Automático", "Generar Reporte"]
+        for accion in acciones:
+            existe = session.exec(select(Acciones).where(Acciones.descripcion == accion)).first()
+            if not existe:
+                accion = Acciones(descripcion=accion)
+                session.add(accion)
+                print(f"Acción insertada: {accion}")
+        
+        session.commit()
+        print("Datos inicializados correctamente")
